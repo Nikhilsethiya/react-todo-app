@@ -1,4 +1,3 @@
-
 trigger:
   branches:
     include:
@@ -7,23 +6,23 @@ pr:
   branches:
     include:
       - main
-      
+
 resources:
 - repo: self
 
 variables:
     # Reference the variable group
   # Inline variables
-    dockerRegistryServiceConnection: 'd3ab8fe1-2bf6-4612-b2a1-a24bb4837ebd'
-    imageRepository: 'todoappdocker'
-    containerRegistry: 'nikhilcontainer.azurecr.io'
+    dockerRegistryServiceConnection: '<docker-registry-service-connection-id>'
+    imageRepository: '<image-repository-name>'
+    containerRegistry: '<container-registry-name>.azurecr.io'
     dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
     tag: '$(Build.BuildId)'
-    vmImageName: 'my-agent'
+    vmImageName: '<agent-pool-name>'
 
 stages:
 - stage: Build
-  displayName: Build and push stage
+  displayName: Build and Push Stage
   jobs:
   - job: Build
     displayName: Build
@@ -32,13 +31,13 @@ stages:
     steps:
     - task: AzureCLI@2
       inputs:
-        azureSubscription: 'Free Trial(6186ef48-ea89-4257-8b72-366360b071df)'
+        azureSubscription: '<azure-subscription-name>'
         scriptType: 'bash'
         scriptLocation: 'inlineScript' 
         inlineScript: 'az acr login --name=$(containerRegistry)'
  
     - task: Docker@2
-      displayName: Build and push an image to container registry
+      displayName: Build and Push an Image to Container Registry
       inputs:
         command: buildAndPush
         repository: $(imageRepository)
@@ -48,7 +47,7 @@ stages:
           $(tag)
 
 - stage: Test
-  displayName: Test stage
+  displayName: Test Stage
   dependsOn: Build
   condition: succeeded()
   jobs:
@@ -58,11 +57,11 @@ stages:
       steps:
       - task: SonarQubePrepare@7
         inputs:
-          SonarQube: 'sonar-qube'
+          SonarQube: '<sonar-qube-service-connection>'
           scannerMode: 'cli'
           configMode: 'manual'
-          cliProjectKey: 'todo-app'
-          cliProjectName: 'todo-app'
+          cliProjectKey: '<project-key>'
+          cliProjectName: '<project-name>'
           cliSources: '.'
       - task: SonarQubeAnalyze@7
         displayName: 'Run SonarQube Analysis'
@@ -72,7 +71,7 @@ stages:
   dependsOn: Test
   condition: succeeded()
   variables:
-  - group: acr-credentials
+  - group: '<acr-credentials-variable-group>'
   jobs:
   - deployment: Deploy
     environment: Production
@@ -84,13 +83,13 @@ stages:
           steps:
           - task: AzureCLI@2
             inputs:
-              azureSubscription: 'Free Trial(6186ef48-ea89-4257-8b72-366360b071df)'
+              azureSubscription: '<azure-subscription-name>'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
                 az container create \
-                --name nikhil-app \
-                --resource-group app-rgGroup \
+                --name <container-instance-name> \
+                --resource-group <resource-group-name> \
                 --image $(containerRegistry)/$(imageRepository):$(tag) \
                 --os-type Linux \
                 --cpu 1 \
@@ -98,4 +97,4 @@ stages:
                 --registry-login-server $(containerRegistry) \
                 --registry-username $(username) \
                 --registry-password $(password) \
-                --dns-name-label nikhil-app
+                --dns-name-label <dns-name-label>
