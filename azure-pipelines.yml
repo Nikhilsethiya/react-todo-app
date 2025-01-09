@@ -47,30 +47,30 @@ stages:
         tags: |
           $(tag)
 
-# - stage: Test
-#   displayName: Test stage
-#   dependsOn: Build
-#   condition: succeeded()
-#   jobs:
-#     - job: test
-#       pool:
-#         name: $(vmImageName)
-#       steps:
-#       - task: SonarQubePrepare@7
-#         inputs:
-#           SonarQube: 'sonar-qube'
-#           scannerMode: 'cli'
-#           configMode: 'manual'
-#           cliProjectKey: 'todo-app'
-#           cliProjectName: 'todo-app'
-#           cliSources: '.'
-#       - task: SonarQubeAnalyze@7
-#         displayName: 'Run SonarQube Analysis'
+- stage: Test
+  displayName: Test stage
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+    - job: test
+      pool:
+        name: $(vmImageName)
+      steps:
+      - task: SonarQubePrepare@7
+        inputs:
+          SonarQube: 'sonar-qube'
+          scannerMode: 'cli'
+          configMode: 'manual'
+          cliProjectKey: 'todo-app'
+          cliProjectName: 'todo-app'
+          cliSources: '.'
+      - task: SonarQubeAnalyze@7
+        displayName: 'Run SonarQube Analysis'
       
 - stage: Deploy
   displayName: Deploy Stage
-  # dependsOn: Test
-  # condition: succeeded()
+  dependsOn: Test
+  condition: succeeded()
   variables:
   - group: acr-credentials
   jobs:
